@@ -1,0 +1,9 @@
+#Sciter Go tray context
+
+Supports windows xp and above
+Makes use of https://github.com/codingbeard/tray
+Use something like https://github.com/cratonica/2goarray to turn your .ico file into a byte array
+Can't have icons >= 128px
+Don't add 16-bit colour icons, they will be used above 32-bit ones
+
+cd example && go build && example.exe
