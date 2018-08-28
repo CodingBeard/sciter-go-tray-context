@@ -11,6 +11,7 @@ import (
 
 type Menu struct {
 	Items []MenuItem
+	window *window.Window
 }
 
 func (m *Menu) DisplayContextMenu(x, y, w int) *window.Window {
@@ -47,6 +48,8 @@ func (m *Menu) DisplayContextMenu(x, y, w int) *window.Window {
 
 	win.SetFocus(hwnd)
 
+	m.window = menu
+
 	return menu
 }
 
@@ -60,6 +63,7 @@ func (m *Menu) menuItemClicked(args ... *sciter.Value) *sciter.Value {
 
 		if id == itemId {
 			item.ClickCallback()
+			m.window.Eval("view.close(null)")
 		}
 	}
 
