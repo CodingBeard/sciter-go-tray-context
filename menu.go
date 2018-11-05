@@ -123,6 +123,7 @@ func getHtml() string {
             $(ul).append("<li id='menuitem" + id + "' data-id='" + id + "'>" + text + "</li>");
             self.select("#menuitem" + id).on("click", function (e) {
                 view.menuItemClicked(this.attributes["data-id"]);
+				view.close(null);
             });
         }
 
