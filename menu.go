@@ -1,17 +1,34 @@
 package context
 
 import (
-	"github.com/sciter-sdk/go-sciter/window"
-	"github.com/sciter-sdk/go-sciter"
-	"log"
+	"encoding/json"
 	"github.com/lxn/win"
-	"unsafe"
+	"github.com/sciter-sdk/go-sciter"
+	"github.com/sciter-sdk/go-sciter/window"
+	"log"
 	"strconv"
+	"unsafe"
 )
+
+type MenuItem struct {
+	Text string
+	ClickCallback func()
+}
 
 type Menu struct {
 	Items []MenuItem
 	window *window.Window
+}
+
+type sciterMenuItem struct {
+	Id int
+	Text string
+}
+
+type sciterXYW struct {
+	X int
+	Y int
+	W int
 }
 
 func (m *Menu) DisplayContextMenu(x, y, w int) *window.Window {
@@ -21,17 +38,43 @@ func (m *Menu) DisplayContextMenu(x, y, w int) *window.Window {
 		log.Fatal(err)
 	}
 
-	menu.LoadHtml(getHtml(), "")
-	for id, item := range m.Items {
-		menu.Call("registerMenuItem", sciter.NewValue(id), sciter.NewValue(item.Text))
-	}
+	menu.DefineFunction("error", func(args ...*sciter.Value) *sciter.Value {
+		log.Println(args[0].String())
+		return sciter.NullValue()
+	})
+
+	menu.DefineFunction("getMenuItems", func(args ...*sciter.Value) *sciter.Value {
+		var items []sciterMenuItem
+
+		for id, item := range m.Items {
+			items = append(items, sciterMenuItem{Id: id, Text: item.Text})
+		}
+
+		jsonBytes, e := json.Marshal(items)
+		if e != nil {
+			log.Println(e)
+		}
+
+		return sciter.NewValue(string(jsonBytes))
+	})
+
+	menu.DefineFunction("getXYW", func(args ...*sciter.Value) *sciter.Value {
+		xyw := sciterXYW{X: x, Y: y, W: w}
+		jsonBytes, e := json.Marshal(xyw)
+		if e != nil {
+			log.Println(e)
+		}
+
+		return sciter.NewValue(string(jsonBytes))
+	})
+
 	menu.DefineFunction("menuItemClicked", m.menuItemClicked)
-	menu.Call(
-		"positionMenu",
-		sciter.NewValue(x),
-		sciter.NewValue(y),
-		sciter.NewValue(w),
-	)
+
+	e := menu.LoadHtml(getHtml(), "")
+	if e != nil {
+		log.Println(e)
+	}
+
 	menu.Show()
 
 	hwnd := win.HWND(unsafe.Pointer(menu.GetHwnd()))
@@ -106,12 +149,15 @@ func getHtml() string {
 
     </style>
     <script type="text/tiscript">
+		VM.unhandledExceptionHandler = function (err) {
+			view.error(err);
+		};
 
         var menuItems = [];
 
         function positionMenu(x, y, w)
         {
-            var h = ((menuItems.length - 1) * 25);
+            var h = (menuItems.length * 25) + 4;
             w = self.toPixels(w + "dip", #width);
             h = self.toPixels(h + "dip", #height);
             view.move(x, y - h, w, h, true);
@@ -130,6 +176,14 @@ func getHtml() string {
         view.root.onFocus = function (evt) {
           if( evt.type == Event.FOCUS_OUT ) { view.close(null); }
         }
+
+		var items = parseData(view.getMenuItems());
+		for (var item in items) {
+			registerMenuItem(item.Id, item.Text);
+		}
+
+		var xyw = parseData(view.getXYW());
+		positionMenu(xyw.X, xyw.Y, xyw.W);
     </script>
 </head>
 <body>
