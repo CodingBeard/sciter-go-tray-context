@@ -13,6 +13,7 @@ import (
 type MenuItem struct {
 	Text string
 	ClickCallback func()
+	ShouldShow func() bool
 }
 
 type Menu struct {
@@ -47,7 +48,9 @@ func (m *Menu) DisplayContextMenu(x, y, w int) *window.Window {
 		var items []sciterMenuItem
 
 		for id, item := range m.Items {
-			items = append(items, sciterMenuItem{Id: id, Text: item.Text})
+			if item.ShouldShow == nil || item.ShouldShow() {
+				items = append(items, sciterMenuItem{Id: id, Text: item.Text})
+			}
 		}
 
 		jsonBytes, e := json.Marshal(items)
