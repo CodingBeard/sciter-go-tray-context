@@ -144,6 +144,7 @@ func getHtml() string {
             padding-left: 10dip;
             padding-top: 5dip;
             height: 20dip;
+			white-space: nowrap;
         }
 
         ul li:hover {
@@ -160,6 +161,9 @@ func getHtml() string {
 
         function positionMenu(x, y, w)
         {
+			if (w == -1) {
+				w = self.select("ul").intrinsicWidthMax() + 10;
+			}
             var h = (menuItems.length * 25) + 4;
             w = self.toPixels(w + "dip", #width);
             h = self.toPixels(h + "dip", #height);
@@ -185,8 +189,10 @@ func getHtml() string {
 			registerMenuItem(item.Id, item.Text);
 		}
 
-		var xyw = parseData(view.getXYW());
-		positionMenu(xyw.X, xyw.Y, xyw.W);
+    	self.ready = function() {
+			var xyw = parseData(view.getXYW());
+			positionMenu(xyw.X, xyw.Y, xyw.W);
+		}
     </script>
 </head>
 <body>
